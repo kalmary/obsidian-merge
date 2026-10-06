@@ -41,7 +41,7 @@ def main(argv: list[str] | None = None) -> None:
     index = build_index(vault_dir)
     relpath_index = index[0]
     order = crawl(start, index)
-    concat(order, output, vault_dir)
+    concat(order, output, vault_dir, index)
 
     # ── Stats ───────────────────────────────────────────────────────
     all_vault_files = set(relpath_index.values())

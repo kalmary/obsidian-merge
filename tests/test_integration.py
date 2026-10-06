@@ -217,3 +217,30 @@ def test_concat_no_frontmatter_passthrough(tmp_path):
     concat(files, out, vault)
     text = out.read_text(encoding="utf-8")
     assert "Just plain content." in text
+
+def test_concat_rewrites_wikilinks_to_anchors(tmp_path):
+    vault = _make_vault(tmp_path, {
+        "start.md": "link to [[Target]] and [[Target|alias]].",
+        "Target.md": "target content",
+    })
+    files = [vault / "start.md", vault / "Target.md"]
+    out = tmp_path / "out.md"
+    idx = build_index(vault)
+    concat(files, out, vault, idx)
+    
+    text = out.read_text(encoding="utf-8")
+    assert '<a id="target"></a>\n\n# Target' in text
+    assert "link to [Target](#target) and [alias](#target)." in text
+
+
+def test_concat_handles_unresolvable_links(tmp_path):
+    vault = _make_vault(tmp_path, {
+        "start.md": "broken [[Missing]] and [[Missing|alias]].",
+    })
+    files = [vault / "start.md"]
+    out = tmp_path / "out.md"
+    idx = build_index(vault)
+    concat(files, out, vault, idx)
+    
+    text = out.read_text(encoding="utf-8")
+    assert "broken Missing and alias." in text

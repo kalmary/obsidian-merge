@@ -8,6 +8,7 @@ Crawl an [Obsidian](https://obsidian.md) vault starting from a given entry-point
 
 - **Link-graph crawl** — follows `[[wikilinks]]` via BFS, not just a flat directory listing — only reachable notes are included
 - **Obsidian-aware resolution** — handles `[[Page]]`, `[[Page|alias]]`, `[[Page#heading]]`, `[[folder/Page]]`, and duplicate basenames (shortest-path-first heuristic, matching Obsidian's behaviour)
+- **Internal link rewriting** — `[[wikilinks]]` are converted to standard markdown links pointing to in-document `#anchors` for seamless reading
 - **Frontmatter stripping** — YAML frontmatter is removed from each note so the output is clean content only
 - **Vault stats** — reports how many notes were concatenated vs total in the vault, and lists unreachable notes
 - **Cycle-safe** — tracks visited files so circular links never cause infinite loops
@@ -84,7 +85,11 @@ Starting from the entry-point file, performs a **breadth-first search** over the
 
 ### 3. Concat
 
-Writes all discovered files into a single output file in BFS visitation order. YAML frontmatter (`---` … `---` at the top of a note) is stripped from each file before writing. Notes are separated by a blank line.
+Writes all discovered files into a single output file in BFS visitation order. It processes each note as follows:
+- Generates a title heading and a URL-safe `<a id="...">` anchor for the note
+- Strips YAML frontmatter (`---` … `---` at the top of a note)
+- Rewrites valid `[[wikilinks]]` to standard markdown links (`[text](#anchor)`) pointing to the respective sections in the merged document. Broken links are downgraded to plain text.
+- Separates notes with a blank line.
 
 After writing, the CLI prints a summary:
 
