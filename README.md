@@ -1,3 +1,5 @@
+> **AI Disclosure:** This project was developed with AI assistance. It is fully tested and safe to use because all generated code has been manually reviewed, relies entirely on the Python Standard Library (zero third-party dependencies, minimizing security risks), and is covered by an automated test suite. You can verify its safety and functionality by running `uv run pytest`.
+
 # obsidian-concat
 
 Crawl an [Obsidian](https://obsidian.md) vault starting from a given entry-point file, follow `[[wikilinks]]` in BFS order, and concatenate all reachable notes into a single markdown file.
@@ -6,6 +8,8 @@ Crawl an [Obsidian](https://obsidian.md) vault starting from a given entry-point
 
 - **Link-graph crawl** — follows `[[wikilinks]]` via BFS, not just a flat directory listing — only reachable notes are included
 - **Obsidian-aware resolution** — handles `[[Page]]`, `[[Page|alias]]`, `[[Page#heading]]`, `[[folder/Page]]`, and duplicate basenames (shortest-path-first heuristic, matching Obsidian's behaviour)
+- **Frontmatter stripping** — YAML frontmatter is removed from each note so the output is clean content only
+- **Vault stats** — reports how many notes were concatenated vs total in the vault, and lists unreachable notes
 - **Cycle-safe** — tracks visited files so circular links never cause infinite loops
 - **Zero dependencies** — stdlib only, Python ≥ 3.12
 
@@ -80,20 +84,16 @@ Starting from the entry-point file, performs a **breadth-first search** over the
 
 ### 3. Concat
 
-Writes all discovered files into a single output file in BFS visitation order. Each note is separated by a horizontal rule and an HTML comment identifying the source:
+Writes all discovered files into a single output file in BFS visitation order. YAML frontmatter (`---` … `---` at the top of a note) is stripped from each file before writing. Notes are separated by a blank line.
 
-```markdown
----
-<!-- source: path/to/note.md -->
----
+After writing, the CLI prints a summary:
 
-(note content here)
+```
+Concatenated 42 / 50 note(s) -> combined.md
 
----
-<!-- source: path/to/another-note.md -->
----
-
-(another note content here)
+8 unreachable note(s):
+  · drafts/old-idea.md
+  · archive/unused.md
 ```
 
 ## Project Structure
@@ -121,4 +121,4 @@ uv run pytest -v
 
 ## License
 
-No license specified.
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
