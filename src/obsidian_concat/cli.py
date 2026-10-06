@@ -39,12 +39,26 @@ def main(argv: list[str] | None = None) -> None:
     output = Path(args.output)
 
     index = build_index(vault_dir)
+    relpath_index = index[0]
     order = crawl(start, index)
     concat(order, output, vault_dir)
 
-    print(f"✅ Concatenated {len(order)} file(s) → {output}")
-    for f in order:
-        try:
-            print(f"  {f.relative_to(vault_dir)}")
-        except ValueError:
-            print(f"  {f}")
+    # ── Stats ───────────────────────────────────────────────────────
+    all_vault_files = set(relpath_index.values())
+    reachable = set(order)
+    unreachable = sorted(
+        all_vault_files - reachable,
+        key=lambda p: str(p),
+    )
+
+    total = len(all_vault_files)
+    concatenated = len(order)
+
+    print(f"Concatenated {concatenated} / {total} note(s) -> {output}")
+    if unreachable:
+        print(f"\n{len(unreachable)} unreachable note(s):")
+        for f in unreachable:
+            try:
+                print(f"  · {f.relative_to(vault_dir)}")
+            except ValueError:
+                print(f"  · {f}")

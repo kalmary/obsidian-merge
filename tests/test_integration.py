@@ -167,7 +167,7 @@ def test_crawl_resolves_path_link_over_basename_collision(tmp_path):
 # ── concat ─────────────────────────────────────────────────────────
 
 
-def test_concat_output_contains_all_sources(tmp_path):
+def test_concat_output_contains_all_content(tmp_path):
     vault = _make_vault(tmp_path, {
         "one.md": "content one",
         "two.md": "content two",
@@ -178,8 +178,8 @@ def test_concat_output_contains_all_sources(tmp_path):
     text = out.read_text(encoding="utf-8")
     assert "content one" in text
     assert "content two" in text
-    assert "<!-- source: one.md -->" in text
-    assert "<!-- source: two.md -->" in text
+    # Source comments should NOT be in output
+    assert "<!-- source:" not in text
 
 
 def test_concat_preserves_order(tmp_path):
@@ -192,3 +192,28 @@ def test_concat_preserves_order(tmp_path):
     concat(files, out, vault)
     text = out.read_text(encoding="utf-8")
     assert text.index("FIRST") < text.index("SECOND")
+
+
+def test_concat_strips_frontmatter(tmp_path):
+    vault = _make_vault(tmp_path, {
+        "note.md": "---\ntitle: Hello\ntags: [a, b]\n---\nActual content here.",
+    })
+    files = [vault / "note.md"]
+    out = tmp_path / "out.md"
+    concat(files, out, vault)
+    text = out.read_text(encoding="utf-8")
+    assert "Actual content here." in text
+    assert "title: Hello" not in text
+    assert "tags:" not in text
+
+
+def test_concat_no_frontmatter_passthrough(tmp_path):
+    """Files without frontmatter are passed through unchanged."""
+    vault = _make_vault(tmp_path, {
+        "plain.md": "Just plain content.",
+    })
+    files = [vault / "plain.md"]
+    out = tmp_path / "out.md"
+    concat(files, out, vault)
+    text = out.read_text(encoding="utf-8")
+    assert "Just plain content." in text

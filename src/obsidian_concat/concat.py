@@ -1,21 +1,24 @@
 """Write ordered files into a single concatenated output."""
 
+import re
 from pathlib import Path
+
+_FRONTMATTER_RE = re.compile(r"\A---\s*\n.*?\n---\s*\n", re.DOTALL)
+
+
+def _strip_frontmatter(text: str) -> str:
+    """Remove YAML frontmatter (``---`` … ``---``) from the start of *text*."""
+    return _FRONTMATTER_RE.sub("", text, count=1)
 
 
 def concat(files: list[Path], output: Path, vault_dir: Path) -> None:
-    """Concatenate *files* into *output*, each preceded by a source comment header."""
+    """Concatenate *files* into *output* with no per-file headers."""
     with open(output, "w", encoding="utf-8") as out:
         for i, filepath in enumerate(files):
-            try:
-                relpath = filepath.relative_to(vault_dir)
-            except ValueError:
-                relpath = filepath
             if i > 0:
                 out.write("\n")
-            out.write(f"---\n")
-            out.write(f"<!-- source: {relpath} -->\n")
-            out.write(f"---\n\n")
-            out.write(filepath.read_text(encoding="utf-8", errors="replace"))
-            if not filepath.read_text(encoding="utf-8", errors="replace").endswith("\n"):
+            content = filepath.read_text(encoding="utf-8", errors="replace")
+            content = _strip_frontmatter(content)
+            out.write(content)
+            if not content.endswith("\n"):
                 out.write("\n")
